@@ -3,19 +3,19 @@
 import { Plugin } from "obsidian";
 import { PluginSettings, DEFAULT_SETTINGS } from "./types";
 import { Logger } from "./logger";
-import { ActivityWatcher } from "./eventListeners";
+import { EventListeners } from "./eventListeners";
 import { NoteLoggerSettingTab } from "./settings";
 
 export default class NoteActivityLoggerPlugin extends Plugin {
   settings: PluginSettings;
   private logger: Logger;
-  private watcher: ActivityWatcher;
+  private watcher: EventListeners;
 
   async onload() {
     await this.loadSettings();
 
     this.logger = new Logger(this.app.vault, this.settings);
-    this.watcher = new ActivityWatcher(this.app, this.settings, this.logger);
+    this.watcher = new EventListeners(this.app, this.settings, this.logger, this);
     this.watcher.start();
 
     this.addSettingTab(new NoteLoggerSettingTab(this.app, this));

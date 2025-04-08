@@ -48,6 +48,155 @@ export interface NoteActivity {
 
 export type LogFormat = "plain" | "csv" | "json" | "custom";
 
+// Parameter configuration types
+export interface ParameterConfig {
+  enabled: boolean;
+  name?: string; // Custom name for the parameter in logs
+  includeType?: boolean; // Whether to include the type in the log
+}
+
+export interface EventParameterConfig {
+  // File-related
+  file?: ParameterConfig;
+  files?: ParameterConfig;
+  oldPath?: ParameterConfig;
+  
+  // Content/Data
+  data?: ParameterConfig;
+  cache?: ParameterConfig;
+  prevCache?: ParameterConfig;
+  
+  // UI Components
+  leaf?: ParameterConfig;
+  menu?: ParameterConfig;
+  editor?: ParameterConfig;
+  info?: ParameterConfig;
+  
+  // Window-related
+  win?: ParameterConfig;
+  window?: ParameterConfig;
+  
+  // DOM Events
+  event?: ParameterConfig;
+  
+  // Other contexts
+  source?: ParameterConfig;
+  url?: ParameterConfig;
+  tasks?: ParameterConfig;
+  
+  // State values
+  pinned?: ParameterConfig;
+  group?: ParameterConfig;
+}
+
+// Default parameter configurations for each event type
+export const DEFAULT_PARAMETER_CONFIGS: Record<string, EventParameterConfig> = {
+  // MetadataCache events
+  trackMetadataChanged: {
+    file: { enabled: true, includeType: true },
+    data: { enabled: false },
+    cache: { enabled: true, includeType: true }
+  },
+  trackMetadataDeleted: {
+    file: { enabled: true, includeType: true },
+    prevCache: { enabled: true, includeType: true }
+  },
+  trackMetadataResolve: {
+    file: { enabled: true, includeType: true }
+  },
+  trackMetadataResolved: {},
+  
+  // Vault events
+  trackVaultCreate: {
+    file: { enabled: true, includeType: true }
+  },
+  trackVaultModify: {
+    file: { enabled: true, includeType: true }
+  },
+  trackVaultDelete: {
+    file: { enabled: true, includeType: true }
+  },
+  trackVaultRename: {
+    file: { enabled: true, includeType: true },
+    oldPath: { enabled: true }
+  },
+  
+  // Workspace events
+  trackWorkspaceQuickPreview: {
+    file: { enabled: true, includeType: true },
+    data: { enabled: false }
+  },
+  trackWorkspaceResize: {},
+  trackWorkspaceActiveLeafChange: {
+    leaf: { enabled: true, includeType: true }
+  },
+  trackWorkspaceFileOpen: {
+    file: { enabled: true, includeType: true }
+  },
+  trackWorkspaceLayoutChange: {},
+  trackWorkspaceWindowOpen: {
+    win: { enabled: true, includeType: true },
+    window: { enabled: true, includeType: true }
+  },
+  trackWorkspaceWindowClose: {
+    win: { enabled: true, includeType: true },
+    window: { enabled: true, includeType: true }
+  },
+  trackWorkspaceCssChange: {},
+  trackWorkspaceFileMenu: {
+    menu: { enabled: true, includeType: true },
+    file: { enabled: true, includeType: true },
+    source: { enabled: true },
+    leaf: { enabled: true, includeType: true }
+  },
+  trackWorkspaceFilesMenu: {
+    menu: { enabled: true, includeType: true },
+    files: { enabled: true, includeType: true },
+    source: { enabled: true },
+    leaf: { enabled: true, includeType: true }
+  },
+  trackWorkspaceUrlMenu: {
+    menu: { enabled: true, includeType: true },
+    url: { enabled: true }
+  },
+  trackWorkspaceEditorMenu: {
+    menu: { enabled: true, includeType: true },
+    editor: { enabled: true, includeType: true },
+    info: { enabled: true, includeType: true }
+  },
+  trackWorkspaceEditorChange: {
+    editor: { enabled: true, includeType: true },
+    info: { enabled: true, includeType: true }
+  },
+  trackWorkspaceEditorPaste: {
+    event: { enabled: true, includeType: true },
+    editor: { enabled: true, includeType: true },
+    info: { enabled: true, includeType: true }
+  },
+  trackWorkspaceEditorDrop: {
+    event: { enabled: true, includeType: true },
+    editor: { enabled: true, includeType: true },
+    info: { enabled: true, includeType: true }
+  },
+  trackWorkspaceQuit: {
+    tasks: { enabled: true, includeType: true }
+  },
+  
+  // WorkspaceLeaf events
+  trackLeafPinnedChange: {
+    pinned: { enabled: true }
+  },
+  trackLeafGroupChange: {
+    group: { enabled: true }
+  },
+  
+  // Publish events
+  trackPublishNavigated: {},
+  
+  // Menu events
+  trackMenuHide: {}
+};
+
 export interface PluginSettings {
   logPath: string;
   deriveNameFromDate: boolean;
@@ -99,6 +248,9 @@ export interface PluginSettings {
   trackClose: boolean;
   trackCreate: boolean;
   trackSave: boolean;
+  
+  // Parameter configurations
+  parameterConfigs: Record<string, EventParameterConfig>;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -152,4 +304,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   trackClose: true,
   trackCreate: true,
   trackSave: true,
+  
+  // Parameter configurations
+  parameterConfigs: DEFAULT_PARAMETER_CONFIGS,
 }; 

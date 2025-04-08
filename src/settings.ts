@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import { PluginSettings, DEFAULT_SETTINGS, LogFormat } from "./types";
+import { PluginSettings, DEFAULT_SETTINGS, LogFormat, EventParameterConfig, ParameterConfig } from "./types";
 import NoteActivityLoggerPlugin from "./main";
 
 export class NoteLoggerSettingTab extends PluginSettingTab {
@@ -13,6 +13,7 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
     publish: false,
     menu: false
   };
+  private expandedParameterSections: Record<string, boolean> = {};
 
   constructor(app: App, plugin: NoteActivityLoggerPlugin) {
     super(app, plugin);
@@ -138,6 +139,14 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
         },
       ];
       this.addToggleSettings(metadataTogglesContainer, metadataEvents);
+      
+      // Add parameter configuration UI
+      this.addParameterConfigUI(contentContainer, "metadata", [
+        "trackMetadataChanged",
+        "trackMetadataDeleted",
+        "trackMetadataResolve",
+        "trackMetadataResolved"
+      ]);
     });
 
     // Vault events
@@ -199,6 +208,14 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
         },
       ];
       this.addToggleSettings(vaultTogglesContainer, vaultEvents);
+      
+      // Add parameter configuration UI
+      this.addParameterConfigUI(contentContainer, "vault", [
+        "trackVaultCreate",
+        "trackVaultModify",
+        "trackVaultDelete",
+        "trackVaultRename"
+      ]);
     });
 
     // Workspace events
@@ -344,6 +361,26 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
         },
       ];
       this.addToggleSettings(workspaceTogglesContainer, workspaceEvents);
+      
+      // Add parameter configuration UI
+      this.addParameterConfigUI(contentContainer, "workspace", [
+        "trackWorkspaceQuickPreview",
+        "trackWorkspaceResize",
+        "trackWorkspaceActiveLeafChange",
+        "trackWorkspaceFileOpen",
+        "trackWorkspaceLayoutChange",
+        "trackWorkspaceWindowOpen",
+        "trackWorkspaceWindowClose",
+        "trackWorkspaceCssChange",
+        "trackWorkspaceFileMenu",
+        "trackWorkspaceFilesMenu",
+        "trackWorkspaceUrlMenu",
+        "trackWorkspaceEditorMenu",
+        "trackWorkspaceEditorChange",
+        "trackWorkspaceEditorPaste",
+        "trackWorkspaceEditorDrop",
+        "trackWorkspaceQuit"
+      ]);
     });
 
     // WorkspaceLeaf events
@@ -391,6 +428,12 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
         },
       ];
       this.addToggleSettings(leafTogglesContainer, leafEvents);
+      
+      // Add parameter configuration UI
+      this.addParameterConfigUI(contentContainer, "leaf", [
+        "trackLeafPinnedChange",
+        "trackLeafGroupChange"
+      ]);
     });
 
     // Publish events
@@ -431,6 +474,11 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
         },
       ];
       this.addToggleSettings(publishTogglesContainer, publishEvents);
+      
+      // Add parameter configuration UI
+      this.addParameterConfigUI(contentContainer, "publish", [
+        "trackPublishNavigated"
+      ]);
     });
 
     // Menu events
@@ -471,6 +519,11 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
         },
       ];
       this.addToggleSettings(menuTogglesContainer, menuEvents);
+      
+      // Add parameter configuration UI
+      this.addParameterConfigUI(contentContainer, "menu", [
+        "trackMenuHide"
+      ]);
     });
   }
 
@@ -524,6 +577,136 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
           })
         );
     });
+  }
+
+  private addParameterConfigUI(containerEl: HTMLElement, sectionId: string, eventKeys: string[]) {
+    // Create a container for parameter configuration
+    const paramConfigContainer = containerEl.createDiv({ cls: "parameter-config-container" });
+    paramConfigContainer.style.marginTop = "16px";
+    paramConfigContainer.style.padding = "8px";
+    paramConfigContainer.style.border = "1px solid var(--background-modifier-border)";
+    paramConfigContainer.style.borderRadius = "4px";
+    
+    // Create a header for parameter configuration
+    const paramConfigHeader = paramConfigContainer.createDiv({ cls: "parameter-config-header" });
+    paramConfigHeader.style.display = "flex";
+    paramConfigHeader.style.alignItems = "center";
+    paramConfigHeader.style.cursor = "pointer";
+    paramConfigHeader.style.padding = "8px 0";
+    
+    // Create toggle icon
+    const toggleIcon = paramConfigHeader.createDiv({ cls: "parameter-toggle" });
+    toggleIcon.style.marginRight = "8px";
+    toggleIcon.style.width = "16px";
+    toggleIcon.style.height = "16px";
+    toggleIcon.style.display = "flex";
+    toggleIcon.style.alignItems = "center";
+    toggleIcon.style.justifyContent = "center";
+    toggleIcon.innerHTML = this.expandedParameterSections[sectionId] ? "▼" : "▶";
+    
+    // Create section title
+    const sectionTitle = paramConfigHeader.createEl("h4", { text: "Parameter Configuration" });
+    sectionTitle.style.margin = "0";
+    
+    // Create content container
+    const paramContentContainer = paramConfigContainer.createDiv({ cls: "parameter-content" });
+    paramContentContainer.style.display = this.expandedParameterSections[sectionId] ? "block" : "none";
+    
+    // Add click handler to toggle section
+    paramConfigHeader.addEventListener("click", () => {
+      this.expandedParameterSections[sectionId] = !this.expandedParameterSections[sectionId];
+      toggleIcon.innerHTML = this.expandedParameterSections[sectionId] ? "▼" : "▶";
+      paramContentContainer.style.display = this.expandedParameterSections[sectionId] ? "block" : "none";
+    });
+    
+    // Add parameter configuration for each event
+    eventKeys.forEach(eventKey => {
+      const eventConfig = this.plugin.settings.parameterConfigs[eventKey] || {};
+      const eventContainer = paramContentContainer.createDiv({ cls: "event-param-container" });
+      eventContainer.style.marginBottom = "16px";
+      eventContainer.style.padding = "8px";
+      eventContainer.style.backgroundColor = "var(--background-secondary)";
+      eventContainer.style.borderRadius = "4px";
+      
+      // Event title
+      eventContainer.createEl("h5", { text: this.formatEventName(eventKey) });
+      
+      // Parameter toggles
+      const paramKeys = Object.keys(eventConfig) as (keyof EventParameterConfig)[];
+      if (paramKeys.length === 0) {
+        eventContainer.createEl("p", { text: "No parameters available for this event." });
+      } else {
+        paramKeys.forEach(paramKey => {
+          const paramConfig = eventConfig[paramKey] || { enabled: false };
+          const paramContainer = eventContainer.createDiv({ cls: "param-toggle-container" });
+          paramContainer.style.marginLeft = "16px";
+          paramContainer.style.marginBottom = "8px";
+          
+          // Parameter toggle
+          new Setting(paramContainer)
+            .setName(this.formatParamName(paramKey))
+            .setDesc(`Enable/disable logging of the ${this.formatParamName(paramKey)} parameter`)
+            .addToggle((tog) => {
+              tog.setValue(paramConfig.enabled).onChange(async (value) => {
+                if (!this.plugin.settings.parameterConfigs) {
+                  this.plugin.settings.parameterConfigs = {};
+                }
+                if (!this.plugin.settings.parameterConfigs[eventKey]) {
+                  this.plugin.settings.parameterConfigs[eventKey] = {};
+                }
+                if (!this.plugin.settings.parameterConfigs[eventKey][paramKey]) {
+                  this.plugin.settings.parameterConfigs[eventKey][paramKey] = { enabled: false };
+                }
+                this.plugin.settings.parameterConfigs[eventKey][paramKey].enabled = value;
+                await this.plugin.saveSettings();
+              });
+            });
+          
+          // Include type toggle (only if parameter is enabled)
+          if (paramConfig.enabled) {
+            const typeContainer = eventContainer.createDiv({ cls: "param-type-container" });
+            typeContainer.style.marginLeft = "32px";
+            typeContainer.style.marginBottom = "8px";
+            
+            new Setting(typeContainer)
+              .setName("Include Type")
+              .setDesc(`Include the type information for ${this.formatParamName(paramKey)} in logs`)
+              .addToggle((tog) => {
+                tog.setValue(paramConfig.includeType || false).onChange(async (value) => {
+                  if (!this.plugin.settings.parameterConfigs) {
+                    this.plugin.settings.parameterConfigs = {};
+                  }
+                  if (!this.plugin.settings.parameterConfigs[eventKey]) {
+                    this.plugin.settings.parameterConfigs[eventKey] = {};
+                  }
+                  if (!this.plugin.settings.parameterConfigs[eventKey][paramKey]) {
+                    this.plugin.settings.parameterConfigs[eventKey][paramKey] = { enabled: true };
+                  }
+                  this.plugin.settings.parameterConfigs[eventKey][paramKey].includeType = value;
+                  await this.plugin.saveSettings();
+                });
+              });
+          }
+        });
+      }
+    });
+  }
+
+  private formatEventName(eventKey: string): string {
+    // Convert camelCase to Title Case with spaces
+    return eventKey
+      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+      .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+      .replace(/track/i, '') // Remove "track" prefix
+      .trim();
+  }
+
+  private formatParamName(paramKey: string): string {
+    // Convert camelCase to Title Case with spaces
+    return paramKey
+      .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+      .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+      .trim();
   }
 
   private areAllSettingsEnabled(keys: (keyof PluginSettings)[]): boolean {
