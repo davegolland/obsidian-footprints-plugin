@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import { PluginSettings, DEFAULT_SETTINGS, LogFormat, EventParameterConfig, ParameterConfig } from "./types";
+import { PluginSettings, DEFAULT_SETTINGS, EventParameterConfig, ParameterConfig } from "./types";
 import NoteActivityLoggerPlugin from "./main";
 
 export class NoteLoggerSettingTab extends PluginSettingTab {
@@ -43,40 +43,12 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
 
       new Setting(contentContainer)
         .setName("Derive File Name From Date")
-        .setDesc("Creates log-YYYY-MM-DD.* instead of a single file")
+        .setDesc("Creates log-YYYY-MM-DD.log instead of a single file")
         .addToggle((tog) =>
           tog.setValue(this.plugin.settings.deriveNameFromDate).onChange(async (v) => {
             this.plugin.settings.deriveNameFromDate = v;
             await this.plugin.saveSettings();
           })
-        );
-
-      new Setting(contentContainer)
-        .setName("Log Format")
-        .addDropdown((dd) =>
-          dd
-            .addOption("plain", "Plain Text")
-            .addOption("csv", "CSV")
-            .addOption("json", "JSON")
-            .addOption("custom", "Custom")
-            .setValue(this.plugin.settings.format)
-            .onChange(async (v: LogFormat) => {
-              this.plugin.settings.format = v;
-              await this.plugin.saveSettings();
-            })
-        );
-
-      new Setting(contentContainer)
-        .setName("Custom Format String")
-        .setDesc("Printf‑style template. %t=timestamp, %e=event, %f=file, %d=details")
-        .addText((txt) =>
-          txt
-            .setPlaceholder("%t | %e | %f | %d")
-            .setValue(this.plugin.settings.customFormat)
-            .onChange(async (value) => {
-              this.plugin.settings.customFormat = value || "%t | %e | %f | %d";
-              await this.plugin.saveSettings();
-            })
         );
     });
 

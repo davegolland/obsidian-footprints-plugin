@@ -46,8 +46,6 @@ export interface NoteActivity {
   details?: string; // additional event details
 }
 
-export type LogFormat = "plain" | "csv" | "json" | "custom";
-
 // Parameter configuration types
 export interface ParameterConfig {
   enabled: boolean;
@@ -200,8 +198,6 @@ export const DEFAULT_PARAMETER_CONFIGS: Record<string, EventParameterConfig> = {
 export interface PluginSettings {
   logPath: string;
   deriveNameFromDate: boolean;
-  format: LogFormat;
-  customFormat: string; // printf‑style template when format === "custom"
   
   // MetadataCache events
   trackMetadataChanged: boolean;
@@ -256,8 +252,6 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
   logPath: "Logs",
   deriveNameFromDate: true,
-  format: "plain",
-  customFormat: "%t | %e | %f | %d",
   
   // MetadataCache events
   trackMetadataChanged: true,
