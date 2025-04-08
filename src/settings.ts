@@ -657,7 +657,11 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
                 if (!this.plugin.settings.parameterConfigs[eventKey][paramKey]) {
                   this.plugin.settings.parameterConfigs[eventKey][paramKey] = { enabled: false };
                 }
-                this.plugin.settings.parameterConfigs[eventKey][paramKey].enabled = value;
+                // Now we can safely access the nested properties
+                const config = this.plugin.settings.parameterConfigs[eventKey][paramKey];
+                if (config) {
+                  config.enabled = value;
+                }
                 await this.plugin.saveSettings();
               });
             });
@@ -682,7 +686,11 @@ export class NoteLoggerSettingTab extends PluginSettingTab {
                   if (!this.plugin.settings.parameterConfigs[eventKey][paramKey]) {
                     this.plugin.settings.parameterConfigs[eventKey][paramKey] = { enabled: true };
                   }
-                  this.plugin.settings.parameterConfigs[eventKey][paramKey].includeType = value;
+                  // Now we can safely access the nested properties
+                  const config = this.plugin.settings.parameterConfigs[eventKey][paramKey];
+                  if (config) {
+                    config.includeType = value;
+                  }
                   await this.plugin.saveSettings();
                 });
               });

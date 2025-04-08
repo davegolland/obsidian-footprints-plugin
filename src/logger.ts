@@ -1,13 +1,17 @@
 import { normalizePath, TFile, Vault } from "obsidian";
 import { PluginSettings, NoteActivity } from "./types";
+import * as winston from 'winston';
+import { format } from 'winston';
 
 export class Logger {
   private vault: Vault;
   private settings: PluginSettings;
+  private winstonLogger: winston.Logger;
 
   constructor(vault: Vault, settings: PluginSettings) {
     this.vault = vault;
     this.settings = settings;
+    this.winstonLogger = this.createWinstonLogger();
   }
 
   getCurrentLogFilePath(): string {
@@ -34,12 +38,38 @@ export class Logger {
     }
   }
 
+  private createWinstonLogger(): winston.Logger {
+    // Create a custom format that includes timestamp and converts to JSON
+    const customFormat = format.combine(
+      format.timestamp(),
+      format.json()
+    );
+
+    // Create a logger with console transport for now
+    // We'll handle the file writing separately
+    return winston.createLogger({
+      level: 'info', // Set to info level as requested
+      format: customFormat,
+      transports: [
+        new winston.transports.Console()
+      ]
+    });
+  }
+
   async log(entry: NoteActivity) {
-    const path = this.getLogFilePath();
-    const line = this.format(entry);
     try {
+      // First log to Winston (which will output to console)
+      this.winstonLogger.info('Activity logged', { entry });
+      
+      // Then write to the file using Obsidian's vault API
+      const path = this.getLogFilePath();
       const file = await this.ensureFile(path);
-      await this.vault.append(file, line + "\n");
+      
+      // Format the log entry
+      const formattedEntry = this.format(entry);
+      
+      // Append to the file
+      await this.vault.append(file, formattedEntry + "\n");
     } catch (e) {
       console.error("NoteActivityLogger: failed to write log", e);
     }
